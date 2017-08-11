@@ -13,17 +13,12 @@ import threading
 from objloader import *
 
 
-#print(glfw.__file__)
-
-'''
-def window_resize(window,width,height):
-	glViewport(0,0,width,height)
-'''
 def showfps():
 	title = ("FPS : {0:.0f}".format(1/(time.time()-t1)))
 	glfw.set_window_title (window, title)
 
-def main(instance_array):
+def main(instance_array,a,b,c):
+	back = a+b+c
 	global window
 	global t1
 
@@ -31,7 +26,6 @@ def main(instance_array):
 		return
 	w_width, w_height = 1280, 720
 
-	#glfw.window_hint(glfw.RESIZABLE , GL_FALSE)
 
 	glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR,3)
 	glfw.window_hint(glfw.CONTEXT_VERSION_MINOR,2)
@@ -46,8 +40,6 @@ def main(instance_array):
 		return
 
 	glfw.make_context_current(window)
-
-	#glfw.set_window_size_callback(window,window_resize)
 
 	cube = [-0.5, -0.5,  0.5, 0.0, 0.0,
 			 0.5, -0.5,  0.5, 1.0, 0.0,
@@ -90,11 +82,6 @@ def main(instance_array):
 
 	indices = np.array(indices, dtype=np.uint32)
 
-	'''
-	texture_offset = len(obj.vertex_index)*12
-	normal_offset = (texture_offset + len(obj.texture_index))*8
-	'''
-
 
 	VAO = glGenVertexArrays(1)
 	glBindVertexArray(VAO)
@@ -111,46 +98,17 @@ def main(instance_array):
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.itemsize * len(indices), indices, GL_STATIC_DRAW)
 	
 
-	#position = glGetAttribLocation(shader,"position")
 	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,cube.itemsize * 5,ctypes.c_void_p(0))
 	glEnableVertexAttribArray(0)
 
-	'''
-	#color = glGetAttribLocation(shader,"color")
-	glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,cube.itemsize*8,ctypes.c_void_p(12))
-	glEnableVertexAttribArray(1)
-	'''
-
-
-
-	#texture_coords = glGetAttribLocation(shader,"inTexCoords")
 	glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,cube.itemsize * 5,ctypes.c_void_p(12))
 	glEnableVertexAttribArray(1)
 
-	#instance_array = []
 	offset=1
 
-	'''
-	for z in range(0,100,2):
-		for y in range(0,100,2):
-			for x in range(0,100,2):
-				translation = pyrr.Vector3([0.0,0.0,0.0])
-				translation.x = x + offset
-				translation.y = y + offset
-				translation.z = z + offset
-				instance_array.append(translation)
-				'''
+	
 
 	instance_array = np.array(instance_array,np.float32).flatten()
-	#instance_array = (instance_array - 
-	#print(instance_array)
-
-
-	'''
-	fi = open('obj','rb')
-
-	instance_array = np.array(np.load(fi).flatten(),np.float32)
-	print(instance_array)'''
 
 
 	instanceVBO = glGenBuffers(1)
@@ -176,14 +134,13 @@ def main(instance_array):
 
 	glEnable(GL_DEPTH_TEST)
 
-	glPolygonMode(GL_FRONT_AND_BACK,GL_LINE)
+	glPolygonMode(GL_FRONT_AND_BACK,GL_FILL)
 
 	view = pyrr.matrix44.create_from_translation(pyrr.Vector3([0,0,0]))
 	projection = pyrr.matrix44.create_perspective_projection_matrix(45.0,w_width/w_height,0.1,10000.0)
-	model = pyrr.matrix44.create_from_translation(pyrr.Vector3([0,-20,-150.0]))
+	model = pyrr.matrix44.create_from_translation(pyrr.Vector3([0,-20,-1.5*back]))
 
 	
-	#mv = pyrr.matrix44.multiply(model,view)
 	vp = pyrr.matrix44.multiply(view,projection)
 	
 
@@ -204,7 +161,7 @@ def main(instance_array):
 
 		rot_x = pyrr.Matrix44.from_x_rotation(0.1 *glfw.get_time())
 		rot_y = pyrr.Matrix44.from_y_rotation(0.2 *glfw.get_time())
-		rot_z = pyrr.Matrix44.from_z_rotation(0.1 *glfw.get_time())
+		rot_z = pyrr.Matrix44.from_z_rotation(0.0 *glfw.get_time())
 
 		rot = pyrr.matrix44.multiply(rot_x, rot_y)
 		rot = pyrr.matrix44.multiply(rot, rot_z)
@@ -216,9 +173,6 @@ def main(instance_array):
 		
 		glDrawElementsInstanced(GL_TRIANGLES,len(indices),GL_UNSIGNED_INT,None,len(instance_array))
 		
-
-		#glDrawElements(GL_TRIANGLES,len(indices),GL_UNSIGNED_INT,None)
-		#glDrawArrays(GL_TRIANGLES,0,len(obj.vertex_index))
 
 		glfw.swap_buffers(window)
 		showfps()
